@@ -1,5 +1,10 @@
 # README
 
+```
+rails s -b0 -p8765
+rails s -b0 -p8765 -e production
+```
+
 This README would normally document whatever steps are necessary to get the
 application up and running.
 
