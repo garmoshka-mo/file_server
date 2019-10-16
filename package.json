@@ -1,5 +1,7 @@
 {
   "name": "primitive_video_server",
   "private": true,
-  "dependencies": {}
+  "dependencies": {
+    "express": "^4.17.1"
+  }
 }
