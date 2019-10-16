@@ -13,7 +13,7 @@ class ApplicationController < ActionController::Base
     end
     puts "File saved: #{filename}"
 
-    render json: {success: false, filename: "uploads/#{filename}"}
+    render json: {success: true, filename: "uploads/#{filename}"}
   rescue => e
     render json: {success: false, message: e.to_s}
   end
