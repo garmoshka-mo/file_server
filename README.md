@@ -20,3 +20,10 @@ POST_PROCESSING_CMD=php ./post_processor_example.php
 ### Launch server
 
 `node server.js`
+
+To keep alive forever:
+```
+yarn global add forever forever-service
+sudo forever-service install upload_server -s server.js
+sudo service upload_server start
+```
