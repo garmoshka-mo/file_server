@@ -1,6 +1,11 @@
 # Simple upload server
 
-### Configuration
+### Prerequisites
+
+* node (tested on node v12)
+* yarn
+
+### Setup
 
 ```
 yarn
