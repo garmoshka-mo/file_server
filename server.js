@@ -1,11 +1,11 @@
 const fs = require('fs')
 const express = require('express')
 require('dotenv').config()
-var exec = require("child_process").exec
+var execFile = require("child_process").execFile
 
 const app = express()
 const port = process.env.PORT
-const scriptPath = process.env.POST_PROCESSING_CMD
+const processingCmd = process.env.POST_PROCESSING_CMD
 
 app.use(express.static('uploads'))
 
@@ -37,8 +37,13 @@ app.post('/upload', function(request, res) {
       stream.end()
         console.log("💾 File saved", filename)
 
-      var cmd = `${scriptPath} '${filePath}' '${metaJson}'`
-      exec(cmd, {}, function (error, stdout, stderr) {
+      var s = processingCmd.split(' ')
+      var cmd = s.shift()
+      var args = s.concat([filePath, metaJson,
+        request.headers['content-type'],
+        request.headers['x-auth-token']
+      ])
+      execFile(cmd, args, {}, function (error, stdout, stderr) {
         if (error)
           receivingFailed(`PHP post-processing error: ${error}`)
         else if (stdout == 'OK') {
