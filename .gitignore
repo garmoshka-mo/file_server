@@ -4,3 +4,4 @@ uploads/*
 .DS_Store
 yarn-error.log
 .env
+errors.log

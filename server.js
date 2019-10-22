@@ -1,13 +1,18 @@
 const fs = require('fs')
 const express = require('express')
+const timeout = require('connect-timeout')
 require('dotenv').config()
 var execFile = require("child_process").execFile
 
 const app = express()
 const port = process.env.PORT
 const processingCmd = process.env.POST_PROCESSING_CMD
+const errorsLogPath = process.env.ERRORS_LOG || './errors.log'
+
+if (!port) throw("Please check that .env configuration is correct")
 
 app.use(express.static('uploads'))
+app.use(timeout(20 * 60 * 1000)) // 20 minutes
 
 app.post('/upload', function(request, res) {
 
@@ -35,7 +40,9 @@ app.post('/upload', function(request, res) {
   function finalizeUpload() {
     try {
       stream.end()
-        console.log("💾 File saved", filename)
+    } catch(e) { receivingFailed(e) }
+    console.log("💾 File saved", filename)
+    res.send({success: true})
 
       var s = processingCmd.split(' ')
       var cmd = s.shift()
@@ -45,14 +52,21 @@ app.post('/upload', function(request, res) {
       ])
       execFile(cmd, args, {}, function (error, stdout, stderr) {
         if (error)
-          receivingFailed(`PHP post-processing error: ${error}`)
+          postProcessingError("⛔️ PHP post-processing error", cmd, args, error)
         else if (stdout == 'OK') {
-          res.send({success: true})
           console.log("✅ File post-processed", filename)
         } else
-          receivingFailed(`PHP post-processor responded not with OK: ${stderr} ${stdout}`)
+          postProcessingError("⛔️ PHP post-processor responded not with OK", cmd, args, stderr, stdout)
       })
-    } catch(e) { receivingFailed(e) }
+  }
+
+  function postProcessingError() {
+    var now = new Date().toISOString()
+    console.error(now, arguments)
+    var content = `${now} ${JSON.stringify(arguments)}\n`
+    fs.appendFile(errorsLogPath, content, function(err) {
+      if(err) console.error("⛔️ Can't write to errors log", errorsLogPath, err, content)
+    })
   }
 
   function receivingFailed(e) {

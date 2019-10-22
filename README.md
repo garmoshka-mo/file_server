@@ -14,6 +14,7 @@ echo '
 PORT=8080
 UPLOADS_PATH=uploads/
 POST_PROCESSING_CMD=php ./post_processor_example.php
+ERRORS_LOG=./errors.log
 ' > .env
 ```
 
