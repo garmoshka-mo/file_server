@@ -8,6 +8,7 @@ const app = express()
 const port = process.env.PORT
 const processingCmd = process.env.POST_PROCESSING_CMD
 const errorsLogPath = process.env.ERRORS_LOG || './errors.log'
+var errorsLog = fs.createWriteStream(errorsLogPath, {flags:'a'})
 
 if (!port) throw("Please check that .env configuration is correct")
 
@@ -64,7 +65,7 @@ app.post('/upload', function(request, res) {
     var now = new Date().toISOString()
     console.error(now, arguments)
     var content = `${now} ${JSON.stringify(arguments)}\n`
-    fs.appendFile(errorsLogPath, content, function(err) {
+    errorsLog.write(content, function(err) {
       if(err) console.error("⛔️ Can't write to errors log", errorsLogPath, err, content)
     })
   }
