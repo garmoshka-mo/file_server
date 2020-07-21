@@ -17,6 +17,7 @@ app.use(timeout(20 * 60 * 1000)) // 20 minutes
 
 app.post('/upload', function(request, res) {
 
+  var downloaded = 0
   console.log('Receiving file', request.headers.metadata)
 
   try {
@@ -30,6 +31,7 @@ app.post('/upload', function(request, res) {
 
     request.on('data', function (data) {
       try {
+        downloaded += data.length
         stream.write(data)
       } catch(e) { receivingFailed(e) }
     })
@@ -42,7 +44,12 @@ app.post('/upload', function(request, res) {
     try {
       stream.end()
     } catch(e) { receivingFailed(e) }
+
     console.log("💾 File saved", filename)
+
+    if (request.headers['content-length'] != downloaded)
+      return receivingFailed(`Downloaded ${downloaded} bytes aren't as expected ${request.headers['content-length']} for ${filename}`)
+
     res.send({success: true})
 
       var s = processingCmd.split(' ')
