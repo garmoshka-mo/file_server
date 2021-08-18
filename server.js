@@ -5,12 +5,10 @@ require('dotenv').config()
 var execFile = require("child_process").execFile
 
 const app = express()
-const port = process.env.PORT
-const processingCmd = process.env.POST_PROCESSING_CMD
-const errorsLogPath = process.env.ERRORS_LOG || './errors.log'
+const port = 8080
+const processingCmd = 'php ./post_processor.php'
+const errorsLogPath = '/tmp/ac-upload-errors.log'
 var errorsLog = fs.createWriteStream(errorsLogPath, {flags:'a'})
-
-if (!port) throw("Please check that .env configuration is correct")
 
 app.use(express.static('uploads'))
 app.use(timeout(20 * 60 * 1000)) // 20 minutes
@@ -24,14 +22,14 @@ app.post('/upload', function(request, res) {
 
     var metaJson = request.headers.metadata
     var meta = JSON.parse(metaJson)
-    var filename = meta['ccmImageName'] || `${+ new Date()}.mp4`
+    var filename = meta['ccmImageName'] || meta['fileName'] || `${+ new Date()}.mp4`
 
-    var filePath = `${process.env.UPLOADS_PATH}${filename}`
+    var filePath = `/tmp/${filename}`
     var stream = fs.createWriteStream(filePath)
 
     request.on('data', function (data) {
       try {
-        downloaded += data.length
+		downloaded += data.length
         stream.write(data)
       } catch(e) { receivingFailed(e) }
     })
@@ -44,25 +42,26 @@ app.post('/upload', function(request, res) {
     try {
       stream.end()
     } catch(e) { receivingFailed(e) }
-
-    console.log("💾 File saved", filename)
-
-    if (request.headers['content-length'] != downloaded)
-      return receivingFailed(`Downloaded ${downloaded} bytes aren't as expected ${request.headers['content-length']} for ${filename}`)
-
+	console.log("💾 File saved", filename)
+	if (request.headers['content-length'] != downloaded) {
+	  return receivingFailed(`Downloaded ${downloaded} bytes aren't as expected ${request.headers['content-length']} for ${filename}`)
+	}
     res.send({success: true})
 
       var s = processingCmd.split(' ')
       var cmd = s.shift()
       var args = s.concat([filePath, metaJson,
         request.headers['content-type'],
-        request.headers['x-auth-token']
+        request.headers['x-auth-token'],
+        request.headers['x-app']
       ])
       execFile(cmd, args, {}, function (error, stdout, stderr) {
         if (error)
           postProcessingError("⛔️ PHP post-processing error", cmd, args, error)
         else if (stdout == 'OK') {
           console.log("✅ File post-processed", filename)
+		  if (fs.existsSync(filePath))
+			fs.unlinkSync(filePath)
         } else
           postProcessingError("⛔️ PHP post-processor responded not with OK", cmd, args, stderr, stdout)
       })
