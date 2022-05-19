@@ -1,12 +1,7 @@
-import fs from 'fs'
 import express from 'express'
 import timeout from 'connect-timeout'
-import dotenv from 'dotenv'
-import {execFile} from "child_process"
 import sharp from 'sharp'
 import fetch from "node-fetch"
-
-dotenv.config()
 
 const app = express()
 const port = 3000
