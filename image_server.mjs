@@ -9,7 +9,7 @@ import fetch from "node-fetch"
 dotenv.config()
 
 const app = express()
-const port = 8080
+const port = 3000
 
 app.use(express.static('image_server'))
 app.use(timeout(20 * 60 * 1000)) // 20 minutes
